@@ -1,0 +1,354 @@
+---
+title: "Final Project"
+author: "Xu Xu"
+date: "April 24, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(httr)
+library(jsonlite)
+library(magrittr)
+library(ggplot2)
+library(tseries)
+library(timeSeries)
+library(forecast)
+library(dplyr)
+library(ggthemes)
+```
+
+###Introduction
+As Bitcoin's price increases dramatically in the last year, more people all around the world get to know the concept of cryptocurrency recently. Lots of people gain a huge amount of money by investing in cryotocurrency market, while others suffer great losses. In this project, I will display the recent and past price trends of Bitcoin and Etherium, the two largest cryptocurrencies. I will also compare Bitcoin with more well-known flat currencies to see the relationship and differences between cryptocurrency market and foreign exchange market in order to give investors a better idea when conducting their future investments.
+
+```{r, echo=FALSE}
+#Bitcoin real time
+bitcoin <- fromJSON('https://api.coindesk.com/v1/bpi/currentprice.json')
+bpi <- bitcoin$bpi
+ 
+code <- bpi %>%
+  sapply(function(x) x$code) %>% 
+  unlist()
+symbol <- bpi %>%
+  sapply(function(x) x$symbol) %>% 
+  unlist()
+rate <- bpi %>%
+  sapply(function(x) x$rate) %>% 
+  unlist()
+description <- bpi %>%
+  sapply(function(x) x$description) %>% 
+  unlist()
+rate_float <- bpi %>%
+  sapply(function(x) x$rate_float) %>% 
+  unlist()
+
+bitcoin.df <- data.frame(code, symbol, rate, description, rate_float)
+bitcoin.df$currency <- rownames(bitcoin.df)
+write.csv(bitcoin.df, file="bitcoin.csv", row.names = F)
+
+btc.data <- read.csv(file='bitcoin.csv', header=TRUE)
+btc.data <- btc.data %>% select(currency, everything())
+
+myvar <- c("currency", "rate")
+btc.data <- btc.data[myvar]
+btc.data["crypto"] <- "BTC"
+btc.data$rate <- as.numeric(gsub(",", "", btc.data$rate))
+
+###Etherium real time
+etherium <- GET('https://bitcoinaverage-global-ethereum-index-v1.p.mashape.com/indices/global/ticker/all?crypto=ETH&fiat=USD%2CEUR%2CGBP', add_headers('X-Mashape-Key'='4UM5yALrNbmsh7inhlyPUnXQtUcFp14145IjsnLwpMRDsBbA0c', 'Accept'='application/json'))
+eth <- content(etherium)
+
+rate <- eth %>%
+  sapply(function(x) x$last) %>% 
+  unlist()
+
+eth.df <- data.frame(rate)
+eth.df$currency <- rownames(eth.df)
+write.csv(eth.df, file="eth.csv", row.names = F)
+
+eth.data <- read.csv(file='eth.csv', header=TRUE)
+eth.data <- eth.data %>% select(currency, everything())
+
+
+eth.data$currency <- as.character(eth.data$currency)
+eth.data$currency[eth.data$currency=="ETHEUR"] <- "EUR"
+eth.data$currency[eth.data$currency=="ETHGBP"] <- "GBP"
+eth.data$currency[eth.data$currency=="ETHUSD"] <- "USD"
+eth.data$currency <- as.factor(eth.data$currency)
+eth.data["crypto"] <- "ETH"
+
+##combine btc and eth & barplot
+btc_and_eth <- rbind(btc.data, eth.data)
+```
+
+The following graph shows the current price of Bitcoin and Etherium in three main currencies
+
+```{r fig1, fig.width = 5, fig.asp = .7, fig.align = "center", echo=FALSE}
+barplot <- ggplot(data=btc_and_eth, aes(x=currency, y=rate, fill=crypto)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_text(aes(label=rate), vjust=-0.3, size=3.5) + 
+  ggtitle("Bitcoin vs. Etherium") + 
+  theme(plot.title = element_text(size = 20, face = "bold")) 
+barplot
+```
+
+The value per Bitcoin is around $9000, making it the most valuable cryptocurrency. Being the second valuable cryptocurrency, Etherium is worth approimately 7% of the value of Bitcoin. Now we have got a general idea of the current price per Bitcoin/Etherium. Choosing Bitcoin as our main focus among all the cryptocurrencies, let's have a look at its price trend during the recent month.
+
+```{r, echo=FALSE}
+###Bitcoin recent month
+bitcoin.recent <- fromJSON('https://api.coindesk.com/v1/bpi/historical/close.json?start=2018-03-24&end=2018-04-24')
+bpi.recent <- bitcoin.recent$bpi
+rate_in_USD <- bpi.recent %>%
+  sapply(function(x) x) %>% 
+  unlist()
+
+bitcoin.recent.df <- data.frame(rate_in_USD)
+bitcoin.recent.df$date <- rownames(bitcoin.recent.df)
+write.csv(bitcoin.recent.df, file="bitcoin_recent.csv", row.names = F)
+
+btc.data.recent <- read.csv(file='bitcoin_recent.csv', header=TRUE)
+btc.data.recent <- btc.data.recent %>% select(date, everything())
+```
+
+```{r fig2, fig.width = 5, fig.asp = .7, fig.align = "center", echo=FALSE}
+inds.recent <- seq(as.Date("2018-03-24"), as.Date("2018-04-24"), by = "day")
+btc.recent <- ts(btc.data.recent$rate_in_USD,     
+           start = c(2018, as.numeric(format(inds.recent[1], "%j"))),
+           frequency = 365)
+plot(btc.recent)
+```
+
+We can see that the price of Bitcoin in US dollars falls and rises sharply. The lowest price and the highest price possess a huge difference of about $3000 just in a month.
+
+As mentioned in the introduction, the Bitcoin price experiences a striking growth during 2017, especially during the latter half of the year. Here is a plot showing the monthly average price of Bitcoin in 2017.
+
+```{r, echo=FALSE}
+#bitcoin price 2017
+btc1 <- read.csv(file="bitcoin_his.csv", header=TRUE)
+btc.data.recent <- btc.data.recent %>% select(date, everything())
+
+#compute mothly average for 2017
+btc1$date <- as.Date(btc1$date)
+btc1$Month <- months(btc1$date)
+btc1$Month <- factor(btc1$Month, levels = month.name)
+monthly.df <- aggregate(rate_in_USD ~ Month , btc1 , mean)
+monthly.df <- monthly.df %>% mutate(rate_in_USD = round(rate_in_USD, 0))
+```
+
+```{r fig3, fig.width = 5, fig.asp = .7, fig.align = "center", echo=FALSE}
+#plot-bitcoin monthly average price in USD
+plot_monthly <- ggplot(data=monthly.df, aes(x=Month, y=rate_in_USD, group=1)) +
+  geom_line()+
+  geom_point()+
+  geom_text(aes(label=rate_in_USD), vjust=-0.3, size=3.5) + 
+  ggtitle("Bitcoin monthly average price in 2017")
+plot_monthly
+```
+
+In the first half year of 2017, the price keeps in a relatively stable level, while in the second half year, it increases in an amazing speed and extent, gaining a value of more than ten thousand dollars in just half year. 
+
+Having the idea that Bitcoin price varies in a large scope and looking for greater return, investors who prefer to take risks and are currently investing in the foreign exchange market choose to move a portion of their money to cryptocurrency market. To investigate the difference and relationship between cryptocurrencies and forex currencies, I choose Bitcoin(BTC) to be the representation of cryptocurrencies and select Euro(EUR), British Pounds(GBP), and Chinese Yuan(CNY) to represent forex currencies. Historical data of these four currencies' price(in US dollars) in the past two years(2016 and 2017) are chosen to be analysed for comparison.
+
+
+
+
+```{r, echo=FALSE}
+#BTC
+bitcoin.his2 <- fromJSON('https://api.coindesk.com/v1/bpi/historical/close.json?start=2016-01-01&end=2017-12-31')
+bpi.his2 <- bitcoin.his2$bpi
+priceUSD <- bpi.his2 %>%
+  sapply(function(x) x) %>% 
+  unlist()
+
+bitcoin.his2.df <- data.frame(priceUSD)
+bitcoin.his2.df$date <- rownames(bitcoin.his2.df)
+write.csv(bitcoin.his2.df, file="BTC_USD2.csv", row.names = F)
+
+btc2 <- read.csv(file='BTC_USD2.csv', header=TRUE)
+btc2 <- btc2 %>% select(date, everything())
+
+#calculate volatility
+btc2["change"] <- NA
+for (i in 2:731){
+  btc2$change[i]=((btc2$priceUSD[i]-btc2$priceUSD[i-1])/btc2$priceUSD[i-1])*100
+  btc2$change[i]=round(btc2$change[i], digits=2)
+}
+btc2$change[1] <- 0.00
+
+btc2_sd <- sd(btc2$change)
+btc2_vol <- round(btc2_sd*sqrt(731), digits=2)
+
+
+#EUR
+eur_his2 <- read.csv(file="EUR_USD2.csv", header=TRUE)
+eur_his2<- eur_his2[seq(dim(eur_his2)[1],1),]
+eur_his2$Date <- as.Date(eur_his2$Date, format="%d-%B-%y")
+eur_his2 <- eur_his2 %>% select(Date, Price, Change)
+colnames(eur_his2) <- c("date", "price", "change")
+eur_his2$change <- as.character(eur_his2$change)
+eur_his2$change <- as.numeric(substr(eur_his2$change,0,nchar(eur_his2$change)-1))
+
+
+eur_his2_sd <- sd(eur_his2$change)
+eur_his2_vol <- round(eur_his2_sd*sqrt(609), digits=2)
+
+eur_his2 <- eur_his2 %>% complete(date = seq(as.Date("2016/1/1"), as.Date("2017/12/31"), by="day"))
+for(i in 1:731){
+  if(is.na(eur_his2$price[i])==TRUE){
+    eur_his2$price[i] <- eur_his2$price[i-1]
+  }   
+}
+
+
+gbp_his2 <- read.csv(file="GBP_USD2.csv", header=TRUE)
+gbp_his2<- gbp_his2[seq(dim(gbp_his2)[1],1),]
+gbp_his2$Date <- as.Date(gbp_his2$Date, format="%d-%B-%y")
+gbp_his2 <- gbp_his2 %>% select(Date, Price, Change)
+colnames(gbp_his2) <- c("date", "price", "change")
+gbp_his2$change <- as.character(gbp_his2$change)
+gbp_his2$change <- as.numeric(substr(gbp_his2$change,0,nchar(gbp_his2$change)-1))
+
+
+gbp_his2_sd <- sd(gbp_his2$change)
+gbp_his2_vol <- round(gbp_his2_sd*sqrt(521), digits=2)
+
+gbp_his2 <- gbp_his2 %>% complete(date = seq(as.Date("2016/1/1"), as.Date("2017/12/31"), by="day"))
+for(i in 1:731){
+  if(is.na(gbp_his2$price[i])==TRUE){
+    gbp_his2$price[i] <- gbp_his2$price[i-1]
+  }   
+}
+
+
+cny_his2 <- read.csv(file="USD_CNY2.csv", header=TRUE)
+cny_his2<- cny_his2[seq(dim(cny_his2)[1],1),]
+cny_his2$Date <- as.Date(cny_his2$Date, format="%d-%B-%y")
+cny_his2 <- cny_his2 %>% select(Date, Price, Change)
+colnames(cny_his2) <- c("date", "price", "change")
+cny_his2$price <- 1/(cny_his2$price)
+cny_his2$change <- as.character(cny_his2$change)
+cny_his2$change <- as.numeric(substr(cny_his2$change,0,nchar(cny_his2$change)-1))
+
+
+cny_his2_sd <- sd(cny_his2$change)
+cny_his2_vol <- round(cny_his2_sd*sqrt(521), digits=2)
+
+cny_his2 <- cny_his2 %>% complete(date = seq(as.Date("2016/1/1"), as.Date("2017/12/31"), by="day"))
+for(i in 1:731){
+  if(is.na(cny_his2$price[i])==TRUE){
+    cny_his2$price[i] <- cny_his2$price[i-1]
+  }   
+}
+```
+
+First I will show the general price trend in crypoturrency market and foreign exchange market by generating the time series plots for Bitcoin, Euro, British Pounds, and Chinese Yuan.
+
+```{r, echo=FALSE}
+#time series
+inds <- seq(as.Date("2016-01-01"), as.Date("2017-12-31"), by = "day")
+btc.ts <- ts(btc2$priceUSD,     
+           start = c(2016, as.numeric(format(inds[1], "%j"))),
+           frequency = 365)
+
+eur.ts <- ts(eur_his2$price,     
+             start = c(2016, as.numeric(format(inds[1], "%j"))),
+             frequency = 365)
+
+gbp.ts <- ts(gbp_his2$price,     
+             start = c(2016, as.numeric(format(inds[1], "%j"))),
+             frequency = 365)
+
+cny.ts <- ts(cny_his2$price,     
+             start = c(2016, as.numeric(format(inds[1], "%j"))),
+             frequency = 365)
+```
+
+```{r, fig4, fig.width = 6, fig.asp = .7, fig.align = "center", echo=FALSE}
+plot(btc.ts)
+ts.plot(eur.ts, gbp.ts, cny.ts, gpars = list(col = c("red", "blue", "yellow")))
+legend("right", legend = c("Euro", "British Pounds", "Chinese Yuan"), col = c("red", "blue", "yellow"), lty = 1, cex=0.8)
+```
+
+Although the scale for the two markets are different, we can still see from the time series plots that the price in cryptocurrency market fluctuates largely during the two-year period, while the price in foreign exchange market is way more stable and only vary by a small amount from the average level.
+
+To measure the four currencies in a comparable metric and compare them with each other despite of different price ranges, I use log-returns to achieve this normalization. Here are the plots and the summary statistics for log-returns of the four currencies' prices.
+
+```{r, echo=FALSE}
+#log-returns
+btc_log_returns <- diff(log(btc2$priceUSD), lag=1)
+eur_log_returns <- diff(log(eur_his2$price), lag=1)
+gbp_log_returns <- diff(log(gbp_his2$price), lag=1)
+cny_log_returns <- diff(log(cny_his2$price), lag=1)
+
+par(mfrow=c(2,2))
+par(mar=c(4, 4, 4, 4))
+plot(btc_log_returns, type="l", main="BTC")
+plot(eur_log_returns, type="l", main="EUR")
+plot(gbp_log_returns, type="l", main="GBP")
+plot(cny_log_returns, type="l", main="CNY")
+```
+```{r, echo=FALSE}
+summary_df <- cbind(as.matrix(summary(btc_log_returns)), as.matrix(summary(eur_log_returns)), as.matrix(summary(gbp_log_returns)), as.matrix(summary(cny_log_returns)))
+colnames(summary_df) <- c("BTC", "EUR", "GBP", "CNY")
+summary_df
+```
+
+From the plots and summary, it is not hard to see that the behavior of bitcoin is so different from the foreign currencies. The range of BTC's price is much larger than that of foreign curerncies. BTC's minimum is much smaller than all the foreign currencies. Its first quartile is also the smallest among all. Its mean and median are much larger, as well as the third quartile, and maximum. 
+
+
+The most obvious difference between cryptocurrencies and forex currencies that jumps into people's mind from looking at the previous plots is their variation in price, or say, the risk investing in different markets. We use volatility to measure the dispersion in returns for a certain market index, and the higher the volatility, more risky it is to invest in the certain market. 
+
+From the daily price changes of every currency and the standard deviation of these changes, the annual volatility for Bitcoin in percentage is calculated to be:
+```{r, echo=FALSE}
+btc2_vol
+```
+
+
+The annual volatility for Euro in percentage is:
+```{r, echo=FALSE}
+eur_his2_vol
+```
+
+
+The annual volatility for British Pounds in percentage is:
+```{r, echo=FALSE}
+gbp_his2_vol
+```
+
+
+The annual volatility for Chinese Yuan in percentage is:
+```{r, echo=FALSE}
+cny_his2_vol
+```
+
+
+The volatility of Bitcoin is much higher than all three forex currencies, which means that it is way more risky to invest in cryptocurrency market than foreign exchange market, with investors facing large probability of gain and loss at the same time.
+
+
+
+To have a direct visual idea of how these two kinds of currencies relate to each other, first I generate the scatter plots of Bitcoin against each one of the three forex currencies.
+```{r, echo=FALSE}
+ccc <- cbind(btc2[2], eur_his2[2], gbp_his2[2], cny_his2[2])
+colnames(ccc) <- c("BTC", "EUR", "GBP", "CNY")
+```
+
+```{r, echo=FALSE}
+par(mfrow=c(2,2))
+par(mar=c(4, 4, 4, 4))
+scatter.smooth(x=ccc$BTC, y=ccc$EUR, xlab="BTC", ylab="EUR")
+scatter.smooth(x=ccc$BTC, y=ccc$GBP, xlab="BTC", ylab="GBP")
+scatter.smooth(x=ccc$BTC, y=ccc$CNY, xlab="BTC", ylab="CNY")
+```
+
+From the plots, it's hard to see any linear relationship between Bitcoin and any of the forex currencies.
+Since there is no linear relationship between the two kinds of currencies, the Pearson correlation is not appropriate for examining the relation between two variables. Instead, I choose to use Spearman correlation and compute a correlation matrix containing correlations between every pair of currencies.
+
+```{r, echo=FALSE}
+correlation <- round(cor(ccc, method="spearman"), 2)
+correlation
+```
+
+The correlation between Bitcoin and any of three other currencies are smaller than 0.4, which imply weak relationship between Bitcoin rate and flat currency rate. However, the correlations among forex currencies are all greater than 0.5, with the highest correlation of 0.88 between Chinese Yuan and British Pounds, which suggests strong correlation between these two currencies.
+
+Knowing that there's barely no relationship between Bitcoin and any flat currencies, it is wise for investors to join both markets in order to diverse their investments and look for higher possibility of gain, because the growth in one market has almost nothing to do with the other one's growth, and the fall in one market does not imply a fall in the other one. 
