@@ -5,7 +5,6 @@ library(magrittr)
 library(ggplot2)
 library(tseries)
 library(timeSeries)
-library(forecast)
 library(dplyr)
 library(ggthemes)
 
@@ -305,7 +304,9 @@ ts.plot(eur.ts, gbp.ts, cny.ts, gpars = list(col = c("red", "blue", "yellow")))
 legend("right", legend = c("Euro", "British Pounds", "Chinese Yuan"), col = c("red", "blue", "yellow"), lty = 1, cex=0.8)
 
 
-#log-returns
+
+
+#more plots
 btc_log_returns <- diff(log(btc2$priceUSD), lag=1)
 eur_log_returns <- diff(log(eur_his2$price), lag=1)
 gbp_log_returns <- diff(log(gbp_his2$price), lag=1)
@@ -319,11 +320,6 @@ three_flat <- cbind(eur_his2[2], gbp_his2[2], cny_his2[2])
 colnames(three_flat) <- c("Euro", "British Pounds", "Chinese Yuan")
 
 hist(btc2$priceUSD, main="Bitcoin", xlab="price")
-hist(eur_his2$price, main="EUR")
-hist(gbp_his2$price, main="GBP")
-hist(cny_his2$price, main="CNY")
-
-
 
 par(mfrow=c(2,2))
 par(mar=c(4, 4, 4, 4))
@@ -334,4 +330,3 @@ plot(cny_log_returns, type="l", main="CNY")
 dev.off()
 
 
-plot(ccc$BTC, ccc$GBP)

@@ -7,7 +7,6 @@ library(magrittr)
 library(ggplot2)
 library(tseries)
 library(timeSeries)
-library(forecast)
 library(dplyr)
 library(ggthemes)
 
