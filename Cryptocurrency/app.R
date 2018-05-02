@@ -92,7 +92,7 @@ ui <- dashboardPage(skin="purple",
   dashboardHeader(title = "Cryptocurrency"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Introduction", tabName = "intro", icon = icon("calendar")),
+      menuItem("Introduction", tabName = "intro", icon = icon("file-text-o")),
       menuItem("Real Time Price", tabName = "realtime", icon = icon("bar-chart-o")),
       menuItem("Histogram", tabName = "histogram", icon = icon("bar-chart-o")),
       menuItem("Time Series Plot", tabName = "timeseries", icon = icon("line-chart")),
