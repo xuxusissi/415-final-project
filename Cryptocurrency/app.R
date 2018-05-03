@@ -112,7 +112,7 @@ ui <- dashboardPage(skin="purple",
                          tabPanel("Etherium", "Etherium Price", plotOutput("plot_etc_real")),
                          tabPanel("Together", "BTC&ETH", plotOutput("plot_both"))
                   ),
-                  box(collapsible=TRUE, h4("The value per Bitcoin is around $9000, making it the most valuable cryptocurrency. Being the second valuable cryptocurrency, Etherium is worth approimately 7% of the value of Bitcoin."))
+                  box(collapsible=TRUE, h4("The value per Bitcoin exceeds $9000, making it the most valuable cryptocurrency. Being the second valuable cryptocurrency, Etherium is worth approimately 8% of the value of Bitcoin."))
               )
       ),
       tabItem(tabName = "timeseries", 
