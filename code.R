@@ -306,7 +306,7 @@ legend("right", legend = c("Euro", "British Pounds", "Chinese Yuan"), col = c("r
 
 
 
-#more plots
+#extra plots
 btc_log_returns <- diff(log(btc2$priceUSD), lag=1)
 eur_log_returns <- diff(log(eur_his2$price), lag=1)
 gbp_log_returns <- diff(log(gbp_his2$price), lag=1)

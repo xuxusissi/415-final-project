@@ -19,7 +19,7 @@ library(ggthemes)
 ```
 
 ###Introduction
-As Bitcoin's price increases dramatically in the last year, more people all around the world get to know the concept of cryptocurrency recently. Lots of people gain a huge amount of money by investing in cryotocurrency market, while others suffer great losses. In this project, I will display the recent and past price trends of Bitcoin and Etherium, the two largest cryptocurrencies. I will also compare Bitcoin with more well-known flat currencies to see the relationship and differences between cryptocurrency market and foreign exchange market in order to give investors a better idea when conducting their future investments.
+As Bitcoin's price increases dramatically in the last year, more people all around the world get to know the concept of cryptocurrency recently. Lots of people gain a huge amount of money by investing in cryotocurrency market, while others suffer great losses. In this project, I will display the recent and past price trends of Bitcoin and Etherium, the two largest cryptocurrencies. I will also compare Bitcoin with some flat currencies to see the relationship and differences between cryptocurrency market and foreign exchange market in order to give investors a better idea when conducting their future investments.
 
 ```{r, echo=FALSE}
 #Bitcoin real time
@@ -81,7 +81,7 @@ eth.data["crypto"] <- "ETH"
 btc_and_eth <- rbind(btc.data, eth.data)
 ```
 
-The following graph shows the current price of Bitcoin and Etherium in three main currencies
+The following graph shows the current price of Bitcoin and Etherium in three main currencies.
 
 ```{r fig1, fig.width = 5, fig.asp = .7, fig.align = "center", echo=FALSE}
 barplot <- ggplot(data=btc_and_eth, aes(x=currency, y=rate, fill=crypto)) +
@@ -92,7 +92,7 @@ barplot <- ggplot(data=btc_and_eth, aes(x=currency, y=rate, fill=crypto)) +
 barplot
 ```
 
-The value per Bitcoin is around $9000, making it the most valuable cryptocurrency. Being the second valuable cryptocurrency, Etherium is worth approimately 7% of the value of Bitcoin. Now we have got a general idea of the current price per Bitcoin/Etherium. Choosing Bitcoin as our main focus among all the cryptocurrencies, let's have a look at its price trend during the recent month.
+The value per Bitcoin exceeds $9000, making it the most valuable cryptocurrency. Being the second valuable cryptocurrency, Etherium is worth approimately 8% of the value of Bitcoin. Now we have got a general idea of the current price per Bitcoin/Etherium. Choosing Bitcoin as our main focus among all the cryptocurrencies, let's have a look at its price trend during the recent month (2018-03-24 ~ 2018-04-24). 
 
 ```{r, echo=FALSE}
 ###Bitcoin recent month
@@ -118,7 +118,7 @@ btc.recent <- ts(btc.data.recent$rate_in_USD,
 plot(btc.recent)
 ```
 
-We can see that the price of Bitcoin in US dollars falls and rises sharply. The lowest price and the highest price possess a huge difference of about $3000 just in a month.
+We can see from the graph that the price of Bitcoin in US dollars falls and rises sharply. The lowest price and the highest price possess a huge difference of about $3000 just in a month.
 
 As mentioned in the introduction, the Bitcoin price experiences a striking growth during 2017, especially during the latter half of the year. Here is a plot showing the monthly average price of Bitcoin in 2017.
 
@@ -147,7 +147,7 @@ plot_monthly
 
 In the first half year of 2017, the price keeps in a relatively stable level, while in the second half year, it increases in an amazing speed and extent, gaining a value of more than ten thousand dollars in just half year. 
 
-Having the idea that Bitcoin price varies in a large scope and looking for greater return, investors who prefer to take risks and are currently investing in the foreign exchange market choose to move a portion of their money to cryptocurrency market. To investigate the difference and relationship between cryptocurrencies and forex currencies, I choose Bitcoin(BTC) to be the representation of cryptocurrencies and select Euro(EUR), British Pounds(GBP), and Chinese Yuan(CNY) to represent forex currencies. Historical data of these four currencies' price(in US dollars) in the past two years(2016 and 2017) are chosen to be analysed for comparison.
+Having the idea that Bitcoin price varies in a large scope and looking for greater returns, investors who prefer to take risks and are currently investing in the foreign exchange market choose to move a portion of their money to cryptocurrency market. To investigate the difference and relationship between cryptocurrencies and forex currencies, I choose Bitcoin(BTC) to represent cryptocurrencies and select Euro(EUR), British Pounds(GBP), and Chinese Yuan(CNY) to be the representation of forex currencies. Historical data of these four currencies' price(in US dollars) in the past two years(2016 and 2017) are chosen to be analysed for comparison.
 
 
 
@@ -269,7 +269,7 @@ ts.plot(eur.ts, gbp.ts, cny.ts, gpars = list(col = c("red", "blue", "yellow")))
 legend("right", legend = c("Euro", "British Pounds", "Chinese Yuan"), col = c("red", "blue", "yellow"), lty = 1, cex=0.8)
 ```
 
-Although the scale for the two markets are different, we can still see from the time series plots that the price in cryptocurrency market fluctuates largely during the two-year period, while the price in foreign exchange market is way more stable and only vary by a small amount from the average level.
+Although the scale for the two markets are different, we can still see from the time series plots that the price in cryptocurrency market fluctuates largely during the two-year period, especially in the second year. In comparison, the price in foreign exchange market is way more stable and only varies by a small amount.
 
 To measure the four currencies in a comparable metric and compare them with each other despite of different price ranges, I use log-returns to achieve this normalization. Here are the plots and the summary statistics for log-returns of the four currencies' prices.
 
@@ -350,4 +350,4 @@ correlation
 
 The correlation between Bitcoin and any of three other currencies are smaller than 0.4, which imply weak relationship between Bitcoin rate and flat currency rate. However, the correlations among forex currencies are all greater than 0.5, with the highest correlation of 0.88 between Chinese Yuan and British Pounds, which suggests strong correlation between these two currencies.
 
-Knowing that there's barely no relationship between Bitcoin and any flat currencies, it is wise for investors to join both markets in order to diverse their investments and look for higher possibility of gain, because the growth in one market has almost nothing to do with the other one's growth, and the fall in one market does not imply a fall in the other one. 
+Knowing that there's barely no relationship between Bitcoin and any flat currencies, it is wise for investors to join both markets in order to diverse their investments and look for higher possibility of gain, because the growth in one market has almost nothing to do with the other one's growth, and the fall in one market does not imply a fall in the other one. However, just as what is derived from the previous analysis, while investors expect for high returns, they should be prepared to take the high risks of investing in cryptocurrency market considering the high volatility of the cryptocurrencies.
